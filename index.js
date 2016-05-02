@@ -7,9 +7,35 @@ const views = require('koa-views');
 const Router = require('koa-router');
 const serve = require('koa-static');
 const bodyParser = require('koa-bodyparser');
+const auth = require('koa-basic-auth');
 
 const app = new Koa();
 const router = new Router();
+
+try {
+  const flags = fs.readFileSync('flags.json', {
+    encoding: 'utf-8',
+  });
+  app.context.flags = JSON.parse(flags);
+}
+catch (err) {
+  console.log(`Failed to load flags: ${err}`);
+  app.context.flags = {};
+}
+
+try {
+  const user = fs.readFileSync('user.json', {
+    encoding: 'utf-8',
+  });
+  app.context.user = JSON.parse(user);
+}
+catch (err) {
+  console.log(`Failed to load user: ${err}`);
+  app.context.user = {
+    name: 'admin',
+    pass: 'admin',
+  };
+}
 
 app.use(views(__dirname + '/views', {
   map: {
@@ -18,15 +44,30 @@ app.use(views(__dirname + '/views', {
   extension: 'ejs',
 }));
 
+app.use(co.wrap(function *(ctx, next) {
+  try {
+    yield next();
+  }
+  catch (err) {
+    if (err.status == 401) {
+      ctx.status = 401;
+      ctx.set('WWW-Authenticate', 'Basic realm="Flags"');
+    }
+    else {
+      throw err;
+    }
+  }
+}));
+
 router.get('/assets/*', serve('.'));
 
-router.get('/', co.wrap(function *(ctx) {
+router.get('/', auth(app.context.user), co.wrap(function *(ctx) {
   yield ctx.render('index', {
     flags: app.context.flags,
   });
 }));
 
-router.get('/flag/:flag', co.wrap(function *(ctx) {
+router.get('/flags/:flag', co.wrap(function *(ctx) {
   const flag = app.context.flags[ctx.params.flag];
 
   if (!flag)
@@ -35,7 +76,7 @@ router.get('/flag/:flag', co.wrap(function *(ctx) {
   ctx.body = flag.value ? 1 : 0;
 }));
 
-router.put('/flag/:flag', co.wrap(save), co.wrap(function *(ctx) {
+router.put('/flags/:flag', auth(app.context.user), co.wrap(save), co.wrap(function *(ctx) {
   const flags = app.context.flags;
   const name = ctx.params.flag;
 
@@ -52,7 +93,7 @@ router.put('/flag/:flag', co.wrap(save), co.wrap(function *(ctx) {
   ctx.status = 200;
 }));
 
-router.post('/flag/:flag', bodyParser(), co.wrap(save), co.wrap(function *(ctx) {
+router.post('/flags/:flag', auth(app.context.user), bodyParser(), co.wrap(save), co.wrap(function *(ctx) {
   const flag = app.context.flags[ctx.params.flag];
   const value = ctx.request.body.value.toString().toLowerCase() === 'true';
 
@@ -63,7 +104,7 @@ router.post('/flag/:flag', bodyParser(), co.wrap(save), co.wrap(function *(ctx) 
   ctx.status = 200;
 }));
 
-router.delete('/flag/:flag', co.wrap(save), co.wrap(function *(ctx) {
+router.delete('/flags/:flag', auth(app.context.user), co.wrap(save), co.wrap(function *(ctx) {
   const flags = app.context.flags;
   const name = ctx.params.flag;
 
@@ -78,17 +119,6 @@ function *save(ctx, next) {
   yield next();
   const flags = JSON.stringify(app.context.flags);
   fs.writeFile('flags.json', flags);
-}
-
-try {
-  const flags = fs.readFileSync('flags.json', {
-    encoding: 'utf-8',
-  });
-  app.context.flags = JSON.parse(flags);
-}
-catch (err) {
-  console.log(`Failed to load flags: ${err}`);
-  app.context.flags = {};
 }
 
 app.use(router.routes());
