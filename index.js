@@ -26,6 +26,15 @@ router.get('/', co.wrap(function *(ctx) {
   });
 }));
 
+router.get('/flag/:flag', co.wrap(function *(ctx) {
+  const flag = app.context.flags[ctx.params.flag];
+
+  if (!flag)
+    return;
+
+  ctx.body = flag.value ? 1 : 0;
+}));
+
 router.put('/flag/:flag', co.wrap(save), co.wrap(function *(ctx) {
   const flags = app.context.flags;
   const name = ctx.params.flag;
