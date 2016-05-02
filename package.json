@@ -18,6 +18,8 @@
   "homepage": "https://github.com/ericchu94/flags#readme",
   "dependencies": {
     "co": "^4.0.0",
-    "koa": "^2.0.0"
+    "ejs": "^2.4.1",
+    "koa": "^2.0.0",
+    "koa-views": "^5.0.1"
   }
 }
