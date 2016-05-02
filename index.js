@@ -26,11 +26,11 @@ router.get('/', co.wrap(function *(ctx) {
   });
 }));
 
-router.put('/:flag', co.wrap(save), co.wrap(function *(ctx) {
+router.put('/flag/:flag', co.wrap(save), co.wrap(function *(ctx) {
   const flags = app.context.flags;
   const name = ctx.params.flag;
 
-  if (!name || name == 'assets')
+  if (!name)
     return;
 
   if (name in flags)
@@ -43,7 +43,7 @@ router.put('/:flag', co.wrap(save), co.wrap(function *(ctx) {
   ctx.status = 200;
 }));
 
-router.post('/:flag', bodyParser(), co.wrap(save), co.wrap(function *(ctx) {
+router.post('/flag/:flag', bodyParser(), co.wrap(save), co.wrap(function *(ctx) {
   const flag = app.context.flags[ctx.params.flag];
   const value = ctx.request.body.value.toString().toLowerCase() === 'true';
 
@@ -54,7 +54,7 @@ router.post('/:flag', bodyParser(), co.wrap(save), co.wrap(function *(ctx) {
   ctx.status = 200;
 }));
 
-router.delete('/:flag', co.wrap(save), co.wrap(function *(ctx) {
+router.delete('/flag/:flag', co.wrap(save), co.wrap(function *(ctx) {
   const flags = app.context.flags;
   const name = ctx.params.flag;
 
