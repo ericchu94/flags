@@ -39,7 +39,7 @@ app.context.flags = {
   },
   flag2: {
     name: 'flag2',
-    value: true,
+    value: false,
   },
   flag3: {
     name: 'flag3',

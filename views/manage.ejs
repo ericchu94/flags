@@ -17,7 +17,13 @@
       </div>
       <div class="row">
         <div class="col-xs-12">
-          <input type="checkbox" id="value" />
+          <div class="form-group">
+            <input type="checkbox" id="value" <%= flag.value ? "checked" : "" %> />
+          </div>
+          <div class="form-group">
+            <input type="button" value="Save" class="btn btn-success" />
+            <input type="button" value="Cancel" class="btn btn-default" />
+          </div>
         </div>
       </div>
     </div>
