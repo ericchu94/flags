@@ -9,6 +9,8 @@ const serve = require('koa-static');
 const bodyParser = require('koa-bodyparser');
 const auth = require('koa-basic-auth');
 
+const PORT = process.env.PORT || 3000;
+
 const app = new Koa();
 const router = new Router();
 
@@ -19,7 +21,7 @@ try {
   app.context.flags = JSON.parse(flags);
 }
 catch (err) {
-  console.log(`Failed to load flags: ${err}`);
+  console.log(`Fail to load flags: ${err}`);
   app.context.flags = {};
 }
 
@@ -30,12 +32,19 @@ try {
   app.context.user = JSON.parse(user);
 }
 catch (err) {
-  console.log(`Failed to load user: ${err}`);
+  console.log(`Fail to load user: ${err}`);
   app.context.user = {
     name: 'admin',
     pass: 'admin',
   };
 }
+
+app.use(co.wrap(function *(ctx, next) {
+  const start = new Date();
+  yield next();
+  const end = new Date();
+  console.log(`${ctx.method} ${ctx.url} - ${end - start} ms`);
+}));
 
 app.use(views(__dirname + '/views', {
   map: {
@@ -91,10 +100,12 @@ router.put('/flags/:flag', auth(app.context.user), co.wrap(save), co.wrap(functi
     value: false,
   };
   ctx.status = 200;
+  console.log(`Create ${name}`);
 }));
 
 router.post('/flags/:flag', auth(app.context.user), bodyParser(), co.wrap(save), co.wrap(function *(ctx) {
-  const flag = app.context.flags[ctx.params.flag];
+  const name = ctx.params.flag;
+  const flag = app.context.flags[name];
   const value = ctx.request.body.value.toString().toLowerCase() === 'true';
 
   if (!flag)
@@ -102,6 +113,7 @@ router.post('/flags/:flag', auth(app.context.user), bodyParser(), co.wrap(save),
 
   flag.value = value;
   ctx.status = 200;
+  console.log(`Update ${name} to ${value}`);
 }));
 
 router.delete('/flags/:flag', auth(app.context.user), co.wrap(save), co.wrap(function *(ctx) {
@@ -113,6 +125,7 @@ router.delete('/flags/:flag', auth(app.context.user), co.wrap(save), co.wrap(fun
 
   delete flags[name];
   ctx.status = 200;
+  console.log(`Delete ${name}`);
 }));
 
 function *save(ctx, next) {
@@ -124,4 +137,6 @@ function *save(ctx, next) {
 app.use(router.routes());
 app.use(router.allowedMethods());
 
-app.listen(3000);
+app.listen(PORT, () => {
+  console.log(`Listen on port ${PORT}`);
+});
