@@ -7,7 +7,7 @@ $(function () {
   });
 
   $('#create').on('click', function () {
-    $.ajax('/flag/' + $('#name').val(), {
+    $.ajax('/' + $('#name').val(), {
       method: 'PUT',
     }).then(function () {
       $('#name').val('');
@@ -22,7 +22,7 @@ $(function () {
   $('#container').on('switchChange.bootstrapSwitch', '.value', function (event, state) {
     var name = $(this).parents('.flag').find('.name').text();
     var checked = state;
-    $.ajax('/flag/' + name, {
+    $.ajax('/' + name, {
       method: 'POST',
       data: {
         value: checked,
@@ -35,4 +35,17 @@ $(function () {
       alert('Failed!');
     });
   });
+
+  $('#container').on('click', '.delete', function () {
+    var name = $(this).parents('.flag').find('.name').text();
+    $.ajax('/' + name, {
+      method: 'DELETE',
+    }).then(function () {
+      $('#container').load('/ #flags', function () {
+        $('.value').bootstrapSwitch();
+      });
+    }, function () {
+      alert('Failed!');
+    });
+	});
 });

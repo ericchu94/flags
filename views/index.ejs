@@ -26,25 +26,30 @@
       </div>
       <div class="row">
         <div class="col-xs-12" id="container">
-					<div class="row" id="flags">
-						<% for (const name in flags) { %>
-							<div class="col-lg-2 col-md-3 col-sm-4 col-xs-12 flag">
-								<div class="row">
-									<div class="col-xs-12">
-										<h1 class="name"><%= name %></h1>
-									</div>
-								</div>
-								<div class="row">
-									<div class="col-xs-12">
-										<div class="form-group">
-											<input type="checkbox" class="value" <%= flags[name].value ? "checked" : "" %> />
-										</div>
-									</div>
-								</div>
-							</div>
-						<% } %>
-					</div>
-				</div>
+          <div class="row" id="flags">
+            <% for (const name in flags) { %>
+              <div class="col-lg-2 col-md-3 col-sm-4 col-xs-12 flag">
+                <div class="row">
+                  <div class="col-xs-12">
+                    <h1 class="name"><%= name %></h1>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-xs-12">
+                    <div class="form-group">
+                      <input type="checkbox" class="value" <%= flags[name].value ? "checked" : "" %> />
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-xs-12">
+                    <input type="button" value="Delete" class="delete btn btn-danger" />
+                  </div>
+                </div>
+              </div>
+            <% } %>
+          </div>
+        </div>
       </div>
     </div>
     <script src="https://code.jquery.com/jquery-2.2.3.min.js" integrity="sha256-a23g1Nt4dtEYOj7bR+vTu7+T8VP13humZFBJNIYoEJo=" crossorigin="anonymous"></script>
