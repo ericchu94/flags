@@ -5,10 +5,13 @@
     <title>Flags</title>
   </head>
   <body>
-    <ul>
-    <% for (const flag of flags) { %>
-      <li><%= flag %></li>
-    <% } %>
-    </ul>
+    <div>
+      <h1>Flags</h1>
+      <ul>
+      <% for (const flag of flags) { %>
+        <li><a href="/flags/<%= flag.name %>"><%= flag.name %></a> <a href="/manage/<%= flag.name %>">Manage</a></li>
+      <% } %>
+      </ul>
+    </div>
   </body>
 </html>

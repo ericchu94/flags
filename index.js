@@ -20,7 +20,17 @@ router.get('/', co.wrap(function *(ctx) {
   });
 }));
 
-app.context.flags = [1, 2, 3];
+app.context.flags = [
+  {
+    name: 'flag1',
+  },
+  {
+    name: 'flag2',
+  },
+  {
+    name: 'flag3',
+  }
+];
 
 app.use(router.routes());
 app.use(router.allowedMethods());
