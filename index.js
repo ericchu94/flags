@@ -26,16 +26,19 @@ router.get('/', co.wrap(function *(ctx) {
   });
 }));
 
-router.get('/manage/:flag', co.wrap(function *(ctx) {
-  const flag = app.context.flags[ctx.params.flag];
-  if (flag) {
-    yield ctx.render('manage', {
-      flag: app.context.flags[ctx.params.flag],
-    });
+router.put('/flag/:flag', bodyParser(), co.wrap(save), co.wrap(function *(ctx) {
+  const flags = app.context.flags;
+  const name = ctx.params.flag;
+  if (!(name in flags)) {
+    flags[name] = {
+      name: name,
+      value: false,
+    };
+    ctx.status = 200;
   }
 }));
 
-router.put('/flag/:flag', bodyParser(), co.wrap(save), co.wrap(function *(ctx) {
+router.post('/flag/:flag', bodyParser(), co.wrap(save), co.wrap(function *(ctx) {
   const flag = app.context.flags[ctx.params.flag];
   const value = ctx.request.body.value.toString().toLowerCase() === 'true';
   if (flag) {

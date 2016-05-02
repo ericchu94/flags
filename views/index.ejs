@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Flags</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/css/bootstrap3/bootstrap-switch.min.css">
   </head>
   <body>
     <div class="container">
@@ -24,15 +25,31 @@
         </div>
       </div>
       <div class="row">
-        <% for (const name in flags) { %>
-          <div class="col-lg-2 col-md-3 col-sm-4 col-xs-12">
-            <h2><a href="/flags/<%= name %>"><%= name %></a> <small><%= flags[name].value %></small></h2>
-            <a href="/manage/<%= name %>" class="btn btn-default">Manage</a></li>
-          </div>
-        <% } %>
+        <div class="col-xs-12" id="container">
+					<div class="row" id="flags">
+						<% for (const name in flags) { %>
+							<div class="col-lg-2 col-md-3 col-sm-4 col-xs-12 flag">
+								<div class="row">
+									<div class="col-xs-12">
+										<h1 class="name"><%= name %></h1>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-xs-12">
+										<div class="form-group">
+											<input type="checkbox" class="value" <%= flags[name].value ? "checked" : "" %> />
+										</div>
+									</div>
+								</div>
+							</div>
+						<% } %>
+					</div>
+				</div>
       </div>
     </div>
     <script src="https://code.jquery.com/jquery-2.2.3.min.js" integrity="sha256-a23g1Nt4dtEYOj7bR+vTu7+T8VP13humZFBJNIYoEJo=" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.3.2/js/bootstrap-switch.min.js"></script>
+    <script src="/assets/index.js"></script>
   </body>
 </html>
