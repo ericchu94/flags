@@ -5,7 +5,9 @@ $(function () {
     var checked = $('#value').is(':checked');
     $.ajax('/flag/' + $('#name').text(), {
       method: 'PUT',
-      data: checked,
+      data: {
+        value: checked,
+      },
     }).then(function () {
       window.location = '/';
     }, function () {

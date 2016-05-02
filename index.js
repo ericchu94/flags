@@ -1,9 +1,12 @@
 'use strict';
+const fs = require('fs');
+
 const Koa = require('koa');
 const co = require('co');
 const views = require('koa-views');
 const Router = require('koa-router');
 const serve = require('koa-static');
+const bodyParser = require('koa-bodyparser');
 
 const app = new Koa();
 const router = new Router();
@@ -32,20 +35,31 @@ router.get('/manage/:flag', co.wrap(function *(ctx) {
   }
 }));
 
-app.context.flags = {
-  flag1: {
-    name: 'flag1',
-    value: true,
-  },
-  flag2: {
-    name: 'flag2',
-    value: false,
-  },
-  flag3: {
-    name: 'flag3',
-    value: true,
-  },
-};
+router.put('/flag/:flag', bodyParser(), co.wrap(save), co.wrap(function *(ctx) {
+  const flag = app.context.flags[ctx.params.flag];
+  const value = ctx.request.body.value.toString().toLowerCase() === 'true';
+  if (flag) {
+    flag.value = value;
+    ctx.status = 200;
+  }
+}));
+
+function *save(ctx, next) {
+  yield next();
+  const flags = JSON.stringify(app.context.flags);
+  fs.writeFile('flags.json', flags);
+}
+
+try {
+  const flags = fs.readFileSync('flags.json', {
+    encoding: 'utf-8',
+  });
+  app.context.flags = JSON.parse(flags);
+}
+catch (err) {
+  console.log(`Failed to load flags: ${err}`);
+  app.context.flags = {};
+}
 
 app.use(router.routes());
 app.use(router.allowedMethods());
