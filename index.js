@@ -2,49 +2,164 @@
 const fs = require('fs');
 
 const Koa = require('koa');
-const co = require('co');
 const views = require('koa-views');
 const Router = require('koa-router');
 const serve = require('koa-static');
 const bodyParser = require('koa-bodyparser');
-const auth = require('koa-basic-auth');
+const session = require('koa-session')
+const convert = require('koa-convert');
+const IO = require('koa-socket');
+
+const Flag = require('./flag');
+const User = require('./user');
 
 const PORT = process.env.PORT || 3000;
 
 const app = new Koa();
+const io = new IO();
 const router = new Router();
 
-try {
-  const flags = fs.readFileSync('flags.json', {
-    encoding: 'utf-8',
+function createFlag(userName, flagName) {
+  return User.findOrCreate({
+    where: {
+      name: userName,
+    },
+  }).spread((user, created) => {
+    // findOrCreate used for pseudo unique constraint
+    return Flag.findOrCreate({
+      where: {
+        name: flagName,
+        userId: user.id,
+      },
+    });
   });
-  app.context.flags = JSON.parse(flags);
-}
-catch (err) {
-  console.log(`Fail to load flags: ${err}`);
-  app.context.flags = {};
 }
 
-try {
-  const user = fs.readFileSync('user.json', {
-    encoding: 'utf-8',
+function getUserId(userName) {
+  return User.findOne({
+    where: {
+      name: userName,
+    },
+  }).then(user => {
+    if (user == null)
+      throw new Error('Not found');
+    return user.id;
   });
-  app.context.user = JSON.parse(user);
-}
-catch (err) {
-  console.log(`Fail to load user: ${err}`);
-  app.context.user = {
-    name: 'admin',
-    pass: 'admin',
-  };
 }
 
-app.use(co.wrap(function *(ctx, next) {
+function deleteFlag(userName, flagName) {
+  return getUserId(userName).then(id => {
+    return Flag.destroy({
+      where: {
+        name: flagName,
+        userId: id,
+      },
+    });
+  });
+}
+
+function getFlags(userName) {
+  return getUserId(userName).then(id => {
+    return Flag.findAll({
+      where: {
+        userId: id,
+      },
+    });
+  }, err => {
+    return [];
+  });
+}
+
+function getFlag(userName, flagName) {
+  return getUserId(userName).then(id => {
+    return Flag.findOne({
+      where: {
+        name: flagName,
+        userId: id,
+      },
+    });
+  });
+}
+
+function setFlag(userName, flagName, enabled) {
+  return getUserId(userName).then(id => {
+    return Flag.update({
+      enabled: enabled,
+    }, {
+      where: {
+        name: flagName,
+        userId: id,
+      },
+    });
+  });
+}
+
+io.attach(app);
+
+io.on('createFlag', (ctx, data) => {
+  ctx.socket.socket.join(data.userName);
+  createFlag(data.userName, data.flagName).spread((flag, created) => {
+    if (created) {
+      io.socket.to(data.userName).emit('createFlag', {
+        user: data.userName,
+        flag: flag,
+      });
+    }
+  });
+});
+
+io.on('getFlag', (ctx, data) => {
+  ctx.socket.socket.join(data.userName);
+  getFlag(data.userName, data.flagName).then(flag => {
+    ctx.socket.emit('getFlag', {
+      user: data.userName,
+      flag: flag,
+    });
+  });
+});
+
+io.on('getFlags', (ctx, data) => {
+  ctx.socket.socket.join(data.userName);
+  getFlags(data.userName).then(flags => {
+    ctx.socket.emit('getFlags', {
+      user: data.userName,
+      flags: flags,
+    });
+  });
+});
+
+io.on('setFlag', (ctx, data) => {
+  ctx.socket.socket.join(data.userName);
+  setFlag(data.userName, data.flagName, data.enabled).then(() => {
+    io.socket.to(data.userName).emit('setFlag', {
+      user: data.userName,
+      flag: {
+        name: data.flagName,
+        enabled: data.enabled,
+      },
+    });
+  });
+});
+
+io.on('deleteFlag', (ctx, data) => {
+  ctx.socket.socket.join(data.userName);
+  deleteFlag(data.userName, data.flagName).then(() => {
+    io.socket.to(data.userName).emit('deleteFlag', {
+      user: data.userName,
+      flag: {
+        name: data.flagName,
+      },
+    });
+  });
+});
+
+app.use((ctx, next) => {
   const start = new Date();
-  yield next();
-  const end = new Date();
-  console.log(`${ctx.method} ${ctx.url} - ${end - start} ms`);
-}));
+  return next().then(() => {
+    const end = new Date();
+    console.log(`${ctx.method} ${ctx.url} - ${end - start} ms`);
+  });
+});
 
 app.use(views(__dirname + '/views', {
   map: {
@@ -53,86 +168,50 @@ app.use(views(__dirname + '/views', {
   extension: 'ejs',
 }));
 
-app.use(co.wrap(function *(ctx, next) {
-  try {
-    yield next();
-  }
-  catch (err) {
-    if (err.status == 401) {
-      ctx.status = 401;
-      ctx.set('WWW-Authenticate', 'Basic realm="Flags"');
-    }
-    else {
-      throw err;
-    }
-  }
-}));
+app.use(convert(session(app)));
 
 router.get('/assets/*', serve('.'));
 
-router.get('/', auth(app.context.user), co.wrap(function *(ctx) {
-  yield ctx.render('index', {
-    flags: app.context.flags,
+router.get('/:user', ctx => {
+  return getFlags(ctx.params.user).then(flags => {
+    return ctx.render('index', {
+      flags: flags,
+    });
   });
-}));
+});
 
-router.get('/flags/:flag', co.wrap(function *(ctx) {
-  const flag = app.context.flags[ctx.params.flag];
+router.get('/flags/:user', ctx => {
+  return getFlags(ctx.params.user).then(flags => {
+    ctx.body = flags;
+  });
+});
 
-  if (!flag)
-    return;
+router.get('/flags/:user/:flag', ctx => {
+  return getFlag(ctx.params.user, ctx.params.flag).then(flag => {
+    ctx.body = flag.enabled ? 1 : 0;
+  });
+});
 
-  ctx.body = flag.value ? 1 : 0;
-}));
+router.put('/flags/:user/:flag', ctx => {
+  return createFlag(ctx.params.user, ctx.params.flag).then(() => {
+    ctx.status = 200;
+    console.log(`Create ${ctx.params.flag}`);
+  });
+});
 
-router.put('/flags/:flag', auth(app.context.user), co.wrap(save), co.wrap(function *(ctx) {
-  const flags = app.context.flags;
-  const name = ctx.params.flag;
+router.post('/flags/:user/:flag', bodyParser(), ctx => {
+  const enabled = ctx.request.body.value.toString().toLowerCase() === 'true';
+  return setFlag(ctx.params.user, ctx.params.flag, enabled).then(() => {
+    ctx.status = 200;
+  });
+});
 
-  if (!name)
-    return;
-
-  if (name in flags)
-    return;
-
-  flags[name] = {
-    name: name,
-    value: false,
-  };
-  ctx.status = 200;
-  console.log(`Create ${name}`);
-}));
-
-router.post('/flags/:flag', auth(app.context.user), bodyParser(), co.wrap(save), co.wrap(function *(ctx) {
-  const name = ctx.params.flag;
-  const flag = app.context.flags[name];
-  const value = ctx.request.body.value.toString().toLowerCase() === 'true';
-
-  if (!flag)
-    return;
-
-  flag.value = value;
-  ctx.status = 200;
-  console.log(`Update ${name} to ${value}`);
-}));
-
-router.delete('/flags/:flag', auth(app.context.user), co.wrap(save), co.wrap(function *(ctx) {
-  const flags = app.context.flags;
-  const name = ctx.params.flag;
-
-  if (!(name in flags))
-    return;
-
-  delete flags[name];
-  ctx.status = 200;
-  console.log(`Delete ${name}`);
-}));
-
-function *save(ctx, next) {
-  yield next();
-  const flags = JSON.stringify(app.context.flags);
-  fs.writeFile('flags.json', flags);
-}
+router.delete('/flags/:user/:flag', ctx => {
+  return deleteFlag(ctx.params.user, ctx.params.flag).then(() => {
+    ctx.status = 200;
+    console.log(`Delete ${ctx.params.flag}`);
+  });
+});
 
 app.use(router.routes());
 app.use(router.allowedMethods());

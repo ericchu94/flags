@@ -23,7 +23,11 @@
     "koa-basic-auth": "^2.0.0",
     "koa-bodyparser": "^3.0.0",
     "koa-router": "^7.0.1",
+    "koa-session": "^3.3.1",
+    "koa-socket": "^4.4.0",
     "koa-static": "^3.0.0",
-    "koa-views": "^5.0.1"
+    "koa-views": "^5.0.1",
+    "sequelize": "^3.24.1",
+    "sqlite": "^2.2.0"
   }
 }

@@ -1,4 +1,12 @@
 $(function () {
+  function getUrl(suffix) {
+    var user = window.location.href.split('/').filter(function (item) {
+      return item.length != 0;
+    }).pop();
+    console.log(user);
+    return '/flags/' + user + '/' + suffix;
+  }
+
   $('.value').bootstrapSwitch();
 
   $('#name').on('keyup', function (event) {
@@ -7,7 +15,7 @@ $(function () {
   });
 
   $('#create').on('click', function () {
-    $.ajax('/flags/' + $('#name').val(), {
+    $.ajax(getUrl($('#name').val()), {
       method: 'PUT',
     }).then(function () {
       $('#name').val('');
@@ -22,7 +30,7 @@ $(function () {
   $('#container').on('switchChange.bootstrapSwitch', '.value', function (event, state) {
     var name = $(this).parents('.flag').find('.name').text();
     var checked = state;
-    $.ajax('/flags/' + name, {
+    $.ajax(getUrl(name), {
       method: 'POST',
       data: {
         value: checked,
@@ -38,7 +46,7 @@ $(function () {
 
   $('#container').on('click', '.delete', function () {
     var name = $(this).parents('.flag').find('.name').text();
-    $.ajax('/flags/' + name, {
+    $.ajax(getUrl(name), {
       method: 'DELETE',
     }).then(function () {
       $('#container').load('/ #flags', function () {
