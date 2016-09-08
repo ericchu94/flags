@@ -32,6 +32,13 @@ function createFlag(userName, flagName) {
         userId: user.id,
       },
     });
+  }).spread((flag, created) => {
+    if (created) {
+      io.socket.to(userName).emit('createFlag', {
+        user: userName,
+        flag: flag,
+      });
+    }
   });
 }
 
@@ -53,6 +60,13 @@ function deleteFlag(userName, flagName) {
       where: {
         name: flagName,
         userId: id,
+      },
+    });
+  }).then(() => {
+    io.socket.to(userName).emit('deleteFlag', {
+      user: userName,
+      flag: {
+        name: flagName,
       },
     });
   });
@@ -91,6 +105,14 @@ function setFlag(userName, flagName, enabled) {
         userId: id,
       },
     });
+  }).then(() => {
+    io.socket.to(userName).emit('setFlag', {
+      user: userName,
+      flag: {
+        name: flagName,
+        enabled: enabled,
+      },
+    });
   });
 }
 
@@ -98,14 +120,7 @@ io.attach(app);
 
 io.on('createFlag', (ctx, data) => {
   ctx.socket.socket.join(data.userName);
-  createFlag(data.userName, data.flagName).spread((flag, created) => {
-    if (created) {
-      io.socket.to(data.userName).emit('createFlag', {
-        user: data.userName,
-        flag: flag,
-      });
-    }
-  });
+  createFlag(data.userName, data.flagName);
 });
 
 io.on('getFlag', (ctx, data) => {
@@ -130,27 +145,12 @@ io.on('getFlags', (ctx, data) => {
 
 io.on('setFlag', (ctx, data) => {
   ctx.socket.socket.join(data.userName);
-  setFlag(data.userName, data.flagName, data.enabled).then(() => {
-    io.socket.to(data.userName).emit('setFlag', {
-      user: data.userName,
-      flag: {
-        name: data.flagName,
-        enabled: data.enabled,
-      },
-    });
-  });
+  setFlag(data.userName, data.flagName, data.enabled);
 });
 
 io.on('deleteFlag', (ctx, data) => {
   ctx.socket.socket.join(data.userName);
-  deleteFlag(data.userName, data.flagName).then(() => {
-    io.socket.to(data.userName).emit('deleteFlag', {
-      user: data.userName,
-      flag: {
-        name: data.flagName,
-      },
-    });
-  });
+  deleteFlag(data.userName, data.flagName);
 });
 
 app.use((ctx, next) => {
