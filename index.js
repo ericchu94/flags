@@ -188,7 +188,8 @@ router.get('/flags/:user', ctx => {
 
 router.get('/flags/:user/:flag', ctx => {
   return getFlag(ctx.params.user, ctx.params.flag).then(flag => {
-    ctx.body = flag.enabled ? 1 : 0;
+    if (flag)
+      ctx.body = flag.enabled ? 1 : 0;
   });
 });
 
