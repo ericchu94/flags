@@ -6,7 +6,7 @@ const Flag = sequelize.define('flag', {
   name: Sequelize.STRING,
   enabled: {
     type: Sequelize.BOOLEAN,
-    defaultValue: true,
+    defaultValue: false,
   },
 });
 
