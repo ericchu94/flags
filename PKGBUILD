@@ -23,10 +23,7 @@ package() {
   cd "$srcdir/${pkgname%-git}"
 
   mkdir -p "$pkgdir/opt/${pkgname%-git}"
-  cp *.js "$pkgdir/opt/${pkgname%-git}"
-  cp *.json "$pkgdir/opt/${pkgname%-git}"
-  cp -r assets "$pkgdir/opt/${pkgname%-git}"
-  cp -r views "$pkgdir/opt/${pkgname%-git}"
+  cp -r *.js *.json yarn.lock assets views "$pkgdir/opt/${pkgname%-git}"
 
   mkdir -p "$pkgdir/usr/bin"
   ln -s "/opt/${pkgname%-git}/index.js" "$pkgdir/usr/bin/flags"
