@@ -1,0 +1,9 @@
+[Unit]
+Description=A Flags server daemon
+
+[Service]
+ExecStart=/usr/bin/flags
+User=flags
+
+[Install]
+WantedBy=network.target

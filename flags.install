@@ -1,0 +1,17 @@
+# arg 1:  the new package version
+post_install() {
+    post_upgrade
+    useradd flags
+}
+
+# arg 1:  the new package version
+# arg 2:  the old package version
+post_upgrade() {
+    cd /opt/flags && npm install
+}
+
+# arg 1:  the old package version
+pre_remove() {
+    rm -rf /opt/flags/node_modules
+    userdel flags
+}
