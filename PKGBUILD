@@ -1,6 +1,6 @@
 # Maintainer: Eric Chu <eric@ericchu.net>
 pkgname=flags-git
-pkgver=v3.0.0.r0.7975611
+pkgver=v3.1.0.r0.e1e5f3b
 pkgrel=1
 pkgdesc='a Flags server daemon'
 arch=('any')
@@ -10,10 +10,8 @@ depends=('nodejs'
          'npm')
 provides=("${pkgname%-git}")
 conflicts=("${pkgname%-git}")
-source=('git://github.com/ericchu94/flags.git'
-        'flags.service')
-md5sums=('SKIP'
-         '37ba4183926e07880ea56c08c8ba324d')
+source=('git://github.com/ericchu94/flags.git')
+md5sums=('SKIP')
 install="${pkgname%-git}.install"
 
 pkgver() {
